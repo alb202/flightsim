@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------------------------------------
 /*
-fuel shuttoff   1
-cabin lights	1
+fuel shuttoff   	1
+cabin lights		1
 Static air		1
 fuel tanks		2
-elevator trim	2
+elevator trim		2
 cowl flaps		3
 flaps			3
 throttle		A1
@@ -13,72 +13,51 @@ mixture			A1
 */
 // -----------------------------------------------------------------------------------------------------
 // Set the codes that are transmitted to the computer when a switch is used
+// Set the pin combinations that are used in any multi-pin inputs, using binary, and the number of unique combinations
+// Set the pin numbers to be used for each input, and the number of pins used
 
-// Output codes for each toggle switch; in each pair, the first value is 'off' and the second is 'on'
+// Codes for toggle switches; in each pair, the first value is 'off' and the second is 'on'
 const String TOGGLECODES[][2] = { {"F30","F30"}, {"C500","C501"}, {"XXX","XXX"} };
+const byte TOGGLEPINS[3] = {2,3,4};
+const byte TOGGLEPINCOUNT = 3; 
 
 // Codes for elevator trim
 const String ELEVATORTRIMCODES[2] = {"C18", "C19"};
+const byte ELEVATORTRIMPINS[2] = {18,19};
+const byte ELEVATORTRIMPINCOUNT = 2;
 
 // Codes for fuel tanks
 const String FUELTANKCODES[3] = {"F041", "F042", "F043"};
+const byte FUELTANKINPUTCODES[3] = {B00, B01, B10};  // Input codes that map the input from the fuel tank switch to the output codes
+const byte FUELTANKINPUTCODECOUNT = 3;
+const byte FUELTANKPINS[2] = {5,6};
+const byte FUELTANKPINCOUNT = 2;
 
 // Codes for flaps
 const String FLAPCODES[4] = {"C17000", "C17033", "C17066", "C17100"};
+const byte FLAPINPUTCODES[4] = {B001, B011, B010, B110};  // Input codes that map the input from the cowl flap switch to the output codes
+const byte FLAPINPUTCODECOUNT = 4; 
+const byte FLAPPINS[3] = {7,8,9};
+const byte FLAPPINCOUNT = 3; 
 
 // Codes for cowl flaps
-const String COWLFLAPCODES[5] = {"C30000", "C30025", "C30050", "C30075", "C30100"}; 
+const String COWLFLAPCODES[5] = {"C30000", "C30025", "C30050", "C30075", "C30100"};
+const byte COWLFLAPINPUTCODES[5] = {B001, B011, B010, B110, B100};  // Input codes that map the input from the ignition to the output codes
+const byte COWLFLAPINPUTCODECOUNT = 5; 
+const byte COWLFLAPPINS[3] = {10,11,12};
+const byte COWLFLAPPINCOUNT = 3; 
 
 // Codes for engine settings
 const String THROTTLECODE = "XX"; // Output for throttle settings 
-const String PROPELLERCODE = "YY"; // Output for propeller settings 
-const String MIXTURECODE = "ZZ"; // Output for mixture settings 
-
-// -----------------------------------------------------------------------------------------------------
-// Set the pin combinations that are used in any multi-pin inputs, using binary, and the number of unique combinations
-
-// Input codes for fuel tanks
-const byte FUELTANKINPUTCODES[3] = {B00, B01, B10};  // Input codes that map the input from the fuel tank switch to the output codes
-const byte FUELTANKINPUTCODECOUNT = 3; 
-
-// Input codes for flaps
-const byte FLAPINPUTCODES[4] = {B001, B011, B010, B110};  // Input codes that map the input from the cowl flap switch to the output codes
-const byte FLAPINPUTCODECOUNT = 4; 
-
-// Input codes for cowl flaps
-const byte COWLFLAPINPUTCODES[5] = {B001, B011, B010, B110, B100};  // Input codes that map the input from the ignition to the output codes
-const byte COWLFLAPINPUTCODECOUNT = 5; 
-
-// -----------------------------------------------------------------------------------------------------
-// Set the pin numbers to be used for each input, and the number of pins used
-// Pin numbers for the toggle switches
-const byte TOGGLEPINS[] = {2,3,4};
-const byte TOGGLEPINCOUNT = 3; 
-
-// Pin numbers for the inputs from the fuel tanks
-const byte FUELTANKPINS[] = {5,6};
-const byte FUELTANKPINCOUNT = 2;
-
-// Pin numbers for the inputs from the elevator trim
-const byte ELEVATORTRIMPINS[] = {18,19};
-const byte ELEVATORTRIMPINCOUNT = 2;
-
-// Pin numbers for the inputs from the cowl flaps
-const byte FLAPPINS[] = {7,8,9};
-const byte FLAPPINCOUNT = 3; 
-
-// Pin numbers for the inputs from the flaps
-const byte COWLFLAPPINS[] = {10,11,12};
-const byte COWLFLAPPINCOUNT = 3; 
-
-// Pin numbers for the inputs from the flaps
 const byte THROTTLEPIN = A0;
+const String PROPELLERCODE = "YY"; // Output for propeller settings
 const byte PROPELLERPIN = A1;
+const String MIXTURECODE = "ZZ"; // Output for mixture settings
 const byte MIXTUREPIN = A2;
 
 // ----------------------------------------------------------------------------------------------
 // Other constants
-const int DELAY = 100;    // Time interval between checking the switch status (in milliseconds)
+const int DELAY = 10;    // Time interval between checking the switch status (in milliseconds)
 const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values of each input are reversed (1 = Off, 0 = On)
 const int TOGGLEVAL = 0;  // The numerical ID of the toggle code list
 const int FUELTANKVAL = 1;  // The numerical ID of the IGNITION code list
@@ -88,17 +67,14 @@ const int COWLFLAPVAL = 4;  // The numerical ID of the IGNITION code list
 const int THROTTLEVAL = 5;  // The numerical ID of the IGNITION code list
 const int PROPELLERVAL = 6;  // The numerical ID of the IGNITION code list
 const int MIXTUREVAL = 7;  // The numerical ID of the IGNITION code list
-const int DEBOUNCE = 5;  // Amount of time in milliseconds to debounce
+const int DEBOUNCE = 2;  // Amount of time in milliseconds to debounce
 const int DEBOUNCETRIES = 1; // Number of times the debounce function should check the value
 const int ENGINETOLERANCE = 10; // Amount the engine setting change should be greater than to trigger a change (out of 1024)
-const long ANALOGMIN = 30; 
-const long ANALOGMAX = 994; 
+const long ANALOGMIN = 30; 		// The analog signal that will be equal to 0
+const long ANALOGMAX = 994; 	// The analog signal that will be equal to 100
 const int ELEVATORTRIM_REDUCER = 1;	 // Number of detents for each print
 const int ELEVATORTRIM_MULTIPLIER = 1;	// Number of prints for each detent
-
-// initialize the loop counter for testing
-//int loopCount = 0;
-          
+         
 void setup() {
 	// Open the serial connection
 	//Serial.begin(115200);
@@ -120,15 +96,17 @@ void setup() {
 	for (byte x = 0; x < COWLFLAPPINCOUNT; x++){
 		pinMode(COWLFLAPPINS[x], INPUT_PULLUP);
 	}
+	
 	// Initialize the analog pins
 	pinMode(THROTTLEPIN, INPUT);
 	pinMode(PROPELLERPIN, INPUT);
 	pinMode(MIXTUREPIN, INPUT);
-  
+
 }
 
 void loop(){
 	Serial.flush();
+	
 	// -------------------------------------
 	// Starting values for inputs
 	static int toggle_old = flipOneBit(0); 
@@ -144,64 +122,67 @@ void loop(){
 	static int cowlflap_old = COWLFLAPINPUTCODES[0];
 	static int cowlflap_new = 0;
 	static int throttle_old = 0;
-	int throttle_new = 0;
+	static int throttle_new = 0;
 	static int propeller_old = 0;
-	int propeller_new = 0;
+	static int propeller_new = 0;
 	static int mixture_old = 0;
-	int mixture_new = 0;
+	static int mixture_new = 0;
   
+	// ---------- Read the analog inputs ---------------------------
 	throttle_new = analogRead(THROTTLEPIN);
 	propeller_new = analogRead(PROPELLERPIN);
 	mixture_new = analogRead(MIXTUREPIN);
 	
-	// Get the values for each pin and write it as a bit (0/1)
+	// ---------- Read the rotary encoder inputs ---------------------------
 	elevatortrim_newA = digitalRead(ELEVATORTRIMPINS[0]);
 	elevatortrim_newB = digitalRead(ELEVATORTRIMPINS[1]);
 	
+	// ---------- Read the digital inputs ---------------------------
+	// Toggle pins
 	for (byte x = 0; x < TOGGLEPINCOUNT; x++){
 		bitWrite(toggle_new, x, digitalRead(TOGGLEPINS[x]));
 	}
-
+	// Fuel tank pins
 	for (byte x = 0; x < FUELTANKPINCOUNT; x++){
 		bitWrite(fueltank_new, x, digitalRead(FUELTANKPINS[x]));
 	}
-
+	// Flap pins
 	for (byte x = 0; x < FLAPPINCOUNT; x++){
 		bitWrite(flap_new, x, digitalRead(FLAPPINS[x]));
 	}
-
+	// Cowl flap pins
 	for (byte x = 0; x < COWLFLAPPINCOUNT; x++){
 		bitWrite(cowlflap_new, x, digitalRead(COWLFLAPPINS[x]));
 	}
 	
-	// Look for changes in each input and send code if value has changed
+	// ------- Look for changes and send code -----------
 	
-	// ------ Engine Controls -------
+	// Analog controls
 	throttle_old = analogCheck(throttle_old, throttle_new, THROTTLEVAL);
 	propeller_old = analogCheck(propeller_old, propeller_new, PROPELLERVAL);
 	mixture_old = analogCheck(mixture_old, mixture_new, MIXTUREVAL);
 	
-	// ------ Elevator Trim -------
+	// Elevator Trim
 	elevatortrim_old = encoderCheck(elevatortrim_old, elevatortrim_newA, elevatortrim_newB, elevatortrim_pos, ELEVATORTRIM_REDUCER, ELEVATORTRIM_MULTIPLIER);
 	
-	// ------ Toggle Switches -------
+	// Toggle Switches
 	toggle_old = switchCheck(toggle_old, toggle_new, TOGGLEVAL); 
 
-	// ------ Fuel Tanks -------
+	// Fuel Tanks
 	fueltank_old = switchCheck(fueltank_old, fueltank_new, FUELTANKVAL);
 
-	// ------ Flaps -------
+	// Flaps
 	flap_old = switchCheck(flap_old, flap_new, FLAPVAL);
 
-	// ------ Cowl Flaps -------
+	// Cowl Flaps
 	cowlflap_old = switchCheck(cowlflap_old, cowlflap_new, COWLFLAPVAL);
 	
 	// Delay the loop
 	delay(DELAY);
 
 	// Ouput loop counter for testing and increment
-	//Serial.println(loopCount);
-	//loopCount = loopCount + 1; 
+	// Serial.println(loopCount);
+	// static int loopCount = loopCount + 1; 
 }
 
 int analogCheck (int oldValue, int newValue, int switchType){
