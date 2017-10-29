@@ -1,137 +1,126 @@
 // -----------------------------------------------------------------------------------------------------
-// Output codes for each toggle switch; in each pair, the first value is 'off' and the second is 'on'
+// Set the codes that are transmitted to the computer when a switch is used
+// Set the pin combinations that are used in any multi-pin inputs, using binary, and the number of unique combinations
+// Set the pin numbers to be used for each input, and the number of pins used
+
+// Codes for toggle switches; in each pair, the first value is 'off' and the second is 'on'
 const String TOGGLECODES[][2] = {
   {"E20","E21"}, {"E17","E18"}, {"A430","A431"}, {"NONE","NONE"},
   {"F020","F021"}, {"C420","C421"}, {"C430","C431"}, {"C440","C441"},
-  {"C410", "C411"}, {"C450","C451"}, {"C06","C05"}, {"BRAKE ON","BRAKE OFF"}
+  {"C410", "C411"}, {"C450","C451"}, {"C06","C05"}, {"BRAKE ON","BRAKE OFF"}, {"GEAR DOWN", "GEAR UP"}, {"CARB HEAT ON", "CARB HEAT OFF"}
   };
-            
-// Ouput codes for ignition 
-const String IGNITIONCODES[5] = {"E11", "E12", "E13", "E14", "E41"};
+const byte TOGGLEPINS[] = {2,3,4,5,6,7,8,9,10,11,12,17,18,19};
+const byte TOGGLEPINCOUNT = 14; 
 
-// Input codes that map the input from the ignition to the output codes
-const byte IGNITIONINPUTCODES[5] = {B110, B010, B100, B000, B011};
-
-// -----------------------------------------------------------------------------------------------------
-
-// Pin numbers for the toggle switches
-const byte TOGGLEPINS[] = {2,3,4,5,6,7,8,9,10,11,12,17};
-
-// Pin numbers for the inputs from the ignition switch
+// Codes for ignition
+const String IGNITIONCODES[] = {"E11", "E12", "E13", "E14", "E41"};
+const byte IGNITIONINPUTCODES[] = {B110, B010, B100, B000, B011};  // Input codes that map the input from the fuel tank switch to the output codes
+const byte IGNITIONINPUTCODECOUNT = 5;
 const byte IGNITIONPINS[] = {14,15,16};
+const byte IGNITIONPINCOUNT = 3;
 
-// Initialize the pin count variables
-byte TOGGLEPINCOUNT, IGNITIONPINCOUNT, IGNITIONCODECOUNT;
-
+// ----------------------------------------------------------------------------------------------
 // Other constants
-const int DELAY = 100;    // Time interval between checking the switch status (in milliseconds)
-const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values are reversed (1 = Off, 0 = On)
-const int TOGGLEVAL = 0;  // The numerical ID of the toggle code list
-const int IGNITIONVAL = 1;  // The numerical ID of the IGNITION code list
-const int DEBOUNCE = 10;  // Amount of time in milliseconds to debounce
-const int DEBOUNCETRIES = 2; // Number of times the debounce function should check the value
-
-// Starting values for toggle switches
-int toggle_old = 0; 
-int toggle_new = 0; 
-
-// Starting values for ignition 
-int ignition_old = 0;
-int ignition_new = 0;
-
-
-// initialize the loop counter for testing
-//int loopCount = 0;
-          
+const int DELAY = 10;    // Time interval between checking the switch status (in milliseconds)
+const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values of each input are reversed (1 = Off, 0 = On)
+const int DEBOUNCE = 1;  // Amount of time in milliseconds to debounce
+const int DEBOUNCETRIES = 1; // Number of times the debounce function should check the value
+         
 void setup() {
-  // Open the serial connection
-  Serial.begin(115200);
-  //Serial.begin(9600);
-  
-  // Get the number of pins for each device type
-  TOGGLEPINCOUNT = (sizeof(TOGGLEPINS)/sizeof(TOGGLEPINS[0]));
-  IGNITIONPINCOUNT = (sizeof(IGNITIONPINS)/sizeof(IGNITIONPINS[0]));
-  IGNITIONCODECOUNT = (sizeof(IGNITIONINPUTCODES)/sizeof(IGNITIONINPUTCODES[0]));
-  
-  // Output the number of pins for each type
-  //Serial.println("Toggle pins");
-  //Serial.println(TOGGLEPINCOUNT); 
-  //Serial.println("Ignition pins");
-  //Serial.println(IGNITIONPINCOUNT);
- 
-  // Initialize the digital pins as input with pullup resistors
-  for (byte x = 0; x < TOGGLEPINCOUNT; x++){
-    pinMode(TOGGLEPINS[x], INPUT_PULLUP);
-  }
-  for (byte x = 0; x < IGNITIONPINCOUNT; x++){
-    pinMode(IGNITIONPINS[x], INPUT_PULLUP);
-  }
+	// Open the serial connection
+	//Serial.begin(115200);
+	Serial.begin(9600);
 
-  toggle_old = flipBit(0);
-  ignition_old = IGNITIONINPUTCODES[0];
+	// Initialize the digital pins as input
+	for (byte x = 0; x < TOGGLEPINCOUNT; x++){
+		pinMode(TOGGLEPINS[x], INPUT_PULLUP);
+	}
+	for (byte x = 0; x < IGNITIONPINCOUNT; x++){
+		pinMode(IGNITIONPINS[x], INPUT_PULLUP);
+	}
+
 }
 
 void loop(){
-  Serial.flush();
-  // Get the values for each device and write it as a bit (0/1)
-  for (byte x = 0; x < TOGGLEPINCOUNT; x++){
-    bitWrite(toggle_new, x, digitalRead(TOGGLEPINS[x]));
-  }
+	Serial.flush();
+	
+	/*
+	// Measure the time of each loop
+	static unsigned long old_time;
+	static unsigned long new_time;
+	new_time = millis();
+	Serial.println(new_time-old_time);
+	old_time = new_time;
+	*/
+	// -------------------------------------
+	// Starting values for inputs
+	static int toggle_old = flipOneBit(0); 
+	static int toggle_new = 0; 
+	static int ignition_old = IGNITIONINPUTCODES[0];
+	static int ignition_new = 0;
+	
+	// ---------- Read the digital inputs ---------------------------
+	// Toggle pins
+	for (byte x = 0; x < TOGGLEPINCOUNT; x++){
+		bitWrite(toggle_new, x, digitalRead(TOGGLEPINS[x]));
+	}
+	// Ignition pins
+	for (byte x = 0; x < IGNITIONPINCOUNT; x++){
+		bitWrite(ignition_new, x, digitalRead(IGNITIONPINS[x]));
+	}
+	
+	// ------- Look for changes and send codes -----------
+	// Toggle Switches
+	if (toggle_old != toggle_new){
+		toggleCheck(toggle_new, toggle_old, TOGGLEPINS, TOGGLEPINCOUNT, TOGGLECODES);
+		toggle_old = toggle_new;
+	}
 
-  for (byte x = 0; x < IGNITIONPINCOUNT; x++){
-    bitWrite(ignition_new, x, digitalRead(IGNITIONPINS[x]));
-  }
-  
-  // Test the toggle switches for changes
-  toggle_old = switchCheck(toggle_old, toggle_new, TOGGLEVAL); 
-  
-  // Test the ignition for changes
-  ignition_old = switchCheck(ignition_old, ignition_new, IGNITIONVAL);
-    
-  // Delay the loop
-  delay(DELAY);
-  
-  // Ouput loop counter for testing and increment
-  //Serial.println(loopCount);
-    //loopCount = loopCount + 1; 
+	// Ignition
+	if (ignition_old != ignition_new){
+		multipinCheck(ignition_new, IGNITIONPINS, IGNITIONPINCOUNT, IGNITIONCODES, IGNITIONINPUTCODES, IGNITIONINPUTCODECOUNT);
+		ignition_old = ignition_new; 
+	}
+	
+	// Delay the loop
+	delay(DELAY);
+
+	// Ouput loop counter for testing and increment
+	// Serial.println(loopCount);
+	// static int loopCount = loopCount + 1; 
 }
 
-int switchCheck (int oldValue, int newValue, int switchType) {
-  // Check if new value is different than previous value
-  if(newValue == oldValue) {
-     // If it hasn't changed, return the old value
-    return oldValue;
-    } else {
-    // Find the difference in bits between the new and old values
-    int changeValue = (oldValue ^ newValue); 
-    // Check if the difference is in the toggle or multi-switch
-    if(switchType==TOGGLEVAL){
-        for (byte x = 0; x < TOGGLEPINCOUNT; x++){
-          // If the bit is different, send the code
-          if (bitRead(changeValue, x) == 1){
-            // Check the stability of the reading
-            if (digitalDebounce(bitRead(newValue, x), TOGGLEPINS[x]) == 1){
-              // Lookup the code to send
-              Serial.println(TOGGLECODES[x][flipBit(bitRead(newValue, x))]); 
-            }}}
-    } else {        
-        bool isStable = 1;
-        for (byte y = 0; y < IGNITIONPINCOUNT; y++){
-          // Check the stability of the reading
-          if (isStable == 1){
-            isStable = digitalDebounce(bitRead(newValue, y), IGNITIONPINS[y]);
-          }}
-        if (isStable == 1){
-          for (byte x = 0; x < IGNITIONCODECOUNT; x++){
-            if (flipIgnition(newValue) == IGNITIONINPUTCODES[x]){
-              Serial.println(IGNITIONCODES[x]);
-            }}} 
-        }
-    // Send linefeed
-    //Serial.println(""); 
-    // Return the new value to be saved as the new old value
-    return newValue;
-  }
+
+void multipinCheck(int newValue, const byte PINS[], byte PINCOUNT, const String CODES[], const byte INPUTCODES[], byte INPUTCODECOUNT){
+	bool isStable = 1;
+	for (byte x = 0; x < PINCOUNT; x++){
+	// Check the stability of the reading
+		if (isStable == 1){
+			isStable = digitalDebounce(bitRead(newValue, x), PINS[x]);
+		}	
+	}
+	if (isStable == 1){
+		for (byte x = 0; x < INPUTCODECOUNT; x++){
+			//if (flipIgnition(newValue) == INPUTCODES[x]){
+			if (flipAllBits(newValue, PINCOUNT) == INPUTCODES[x]){
+					Serial.println(CODES[x]);
+			}
+		}
+	} 
+}
+
+void toggleCheck(int newValue, int oldValue, const byte PINS[], byte PINCOUNT, const String CODES[][2]){
+	int changeValue = (oldValue ^ newValue);	
+	for (byte x = 0; x < PINCOUNT; x++){
+		// If the bit is different, send the code
+		if (bitRead(changeValue, x) == 1){
+			// Check the stability of the reading
+			if (digitalDebounce(bitRead(newValue, x), PINS[x]) == 1){
+				// Lookup the code to send
+				Serial.println(CODES[x][flipOneBit(bitRead(newValue, x))]); 
+			}
+		}
+	}
 }
 
 byte digitalDebounce (byte newValue, byte pin){
@@ -146,8 +135,8 @@ byte digitalDebounce (byte newValue, byte pin){
   return 1; 
 }
 
-byte flipBit(byte value){
-  // Flip a byte based on the FLIPONOFF variable
+byte flipOneBit(byte value){
+  // Flip a bit based on the FLIPONOFF variable
   if (FLIPONOFF == true){
     return (value ^ 1);
   } else{
@@ -155,11 +144,11 @@ byte flipBit(byte value){
   }
 }
 
-int flipIgnition(int value){
-    // Flip a byte based on the FLIPONOFF variable
-  if (FLIPONOFF == true){
-    return (value ^ 7);
-  } else{
-    return value;
-  }
+int flipAllBits(int value, int pins) {
+	if (FLIPONOFF == true){
+		int mask = (1 << pins) - 1;
+		return ~value & mask;
+	} else{
+		return value;
+	}
 }
