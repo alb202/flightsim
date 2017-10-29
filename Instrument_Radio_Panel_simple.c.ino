@@ -1,22 +1,24 @@
 // -----------------------------------------------------------------------------------------------------
 /*
-attitude reference adjust	2
-altimeter (kohlsman)	2
-heading		2
-heading	bug  2
-airspeed adjust	2
-com pull test 1
-com swap standby 1
-com adjust 3
-swap com1/com2 1
-transponder 4 (up/down for each digit using binary)
-obs nav1   2
-obs nav2	2
-adf heading select knob 2
-adf frequency 2
-DME knob 	3
-DME nav selector 1
-NAV/GPS selector 1
+attitude reference adjust	2			1x rotary encoder
+altimeter (kohlsman)	2				1x rotary encoder
+heading		2							1x rotary encoder
+heading	bug  2							1x rotary encoder
+airspeed adjust	2						1x rotary encoder
+com/nav pull test 1							4x momentary button	
+com/nav swap standby 1						4x momentary button
+com/nav adjust 3							4x rotary encoder with button
+swap com1/com2 1						N/A
+transponder 6 (up/down for each digit using binary)	8x momentary button
+obs nav1   2							1x rotary encoder
+obs nav2	2							1x rotary encoder
+adf heading select knob 2				1x rotary encoder
+adf frequency 2							1x rotary encoder
+DME knob 	3							1x rotary encoder with button
+DME nav selector 1						1x momentary button
+NAV/GPS selector 1						1x momentary button
+
+totals = 24x rotary encoders, 18x momentary buttons
 */
 // -----------------------------------------------------------------------------------------------------
 // Set the codes that are transmitted to the computer when a switch is used
