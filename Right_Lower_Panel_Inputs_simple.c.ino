@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------------------------------------
 /*
-fuel shuttoff   	1
-cabin lights		1
+fuel shuttoff   1
+cabin lights	1
 Static air		1
 fuel tanks		2
-elevator trim		2
+elevator trim	2
 cowl flaps		3
 flaps			3
 throttle		A1
@@ -59,15 +59,10 @@ const byte MIXTUREPIN = A2;
 // Other constants
 const int DELAY = 10;    // Time interval between checking the switch status (in milliseconds)
 const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values of each input are reversed (1 = Off, 0 = On)
-const int TOGGLEVAL = 0;  // The numerical ID of the toggle code list
-const int FUELTANKVAL = 1;  // The numerical ID of the IGNITION code list
-const int ELEVATORTRIMVAL = 2;  // The numerical ID of the IGNITION code list
-const int FLAPVAL = 3;  // The numerical ID of the IGNITION code list
-const int COWLFLAPVAL = 4;  // The numerical ID of the IGNITION code list
-const int THROTTLEVAL = 5;  // The numerical ID of the IGNITION code list
-const int PROPELLERVAL = 6;  // The numerical ID of the IGNITION code list
-const int MIXTUREVAL = 7;  // The numerical ID of the IGNITION code list
-const int DEBOUNCE = 2;  // Amount of time in milliseconds to debounce
+const int THROTTLEVAL = 1;  // The numerical ID of the IGNITION code list
+const int PROPELLERVAL = 2;  // The numerical ID of the IGNITION code list
+const int MIXTUREVAL = 3;  // The numerical ID of the IGNITION code list
+const int DEBOUNCE = 1;  // Amount of time in milliseconds to debounce
 const int DEBOUNCETRIES = 1; // Number of times the debounce function should check the value
 const int ENGINETOLERANCE = 10; // Amount the engine setting change should be greater than to trigger a change (out of 1024)
 const long ANALOGMIN = 30; 		// The analog signal that will be equal to 0
@@ -106,6 +101,13 @@ void setup() {
 
 void loop(){
 	Serial.flush();
+	
+	// Measure the time of each loop
+	static unsigned long old_time;
+	static unsigned long new_time;
+	new_time = millis();
+	Serial.println(new_time-old_time);
+	old_time = new_time;
 	
 	// -------------------------------------
 	// Starting values for inputs
@@ -155,8 +157,7 @@ void loop(){
 		bitWrite(cowlflap_new, x, digitalRead(COWLFLAPPINS[x]));
 	}
 	
-	// ------- Look for changes and send code -----------
-	
+	// ------- Look for changes and send codes -----------
 	// Analog controls
 	throttle_old = analogCheck(throttle_old, throttle_new, THROTTLEVAL);
 	propeller_old = analogCheck(propeller_old, propeller_new, PROPELLERVAL);
@@ -166,16 +167,28 @@ void loop(){
 	elevatortrim_old = encoderCheck(elevatortrim_old, elevatortrim_newA, elevatortrim_newB, elevatortrim_pos, ELEVATORTRIM_REDUCER, ELEVATORTRIM_MULTIPLIER);
 	
 	// Toggle Switches
-	toggle_old = switchCheck(toggle_old, toggle_new, TOGGLEVAL); 
+	if (toggle_old != toggle_new){
+		toggleCheck(toggle_new, toggle_old, TOGGLEPINS, TOGGLEPINCOUNT, TOGGLECODES);
+		toggle_old = toggle_new;
+	}
 
 	// Fuel Tanks
-	fueltank_old = switchCheck(fueltank_old, fueltank_new, FUELTANKVAL);
+	if (fueltank_old != fueltank_new){
+		multipinCheck(fueltank_new, FUELTANKPINS, FUELTANKPINCOUNT, FUELTANKCODES, FUELTANKINPUTCODES, FUELTANKINPUTCODECOUNT);
+		fueltank_old = fueltank_new; 
+	}
 
 	// Flaps
-	flap_old = switchCheck(flap_old, flap_new, FLAPVAL);
-
+	if (flap_old != flap_new){
+		multipinCheck(flap_new, FLAPPINS, FLAPPINCOUNT, FLAPCODES, FLAPINPUTCODES, FLAPINPUTCODECOUNT);
+		flap_old = flap_new;
+	}
+	
 	// Cowl Flaps
-	cowlflap_old = switchCheck(cowlflap_old, cowlflap_new, COWLFLAPVAL);
+	if (cowlflap_old != cowlflap_new){
+		multipinCheck(cowlflap_new, COWLFLAPPINS, COWLFLAPPINCOUNT, COWLFLAPCODES, COWLFLAPINPUTCODES, COWLFLAPINPUTCODECOUNT);
+		cowlflap_old = cowlflap_new;
+	}		
 	
 	// Delay the loop
 	delay(DELAY);
@@ -255,7 +268,7 @@ void printEncoderCode(String output, int multi){
 	}
 }
 
-void checkMultipin(int newValue, const byte PINS[], byte PINCOUNT, const String CODES[], const byte INPUTCODES[], byte INPUTCODECOUNT){
+void multipinCheck(int newValue, const byte PINS[], byte PINCOUNT, const String CODES[], const byte INPUTCODES[], byte INPUTCODECOUNT){
 	bool isStable = 1;
 	for (byte x = 0; x < PINCOUNT; x++){
 	// Check the stability of the reading
@@ -273,7 +286,7 @@ void checkMultipin(int newValue, const byte PINS[], byte PINCOUNT, const String 
 	} 
 }
 
-void checkToggles(int newValue, int oldValue, const byte PINS[], byte PINCOUNT, const String CODES[][2]){
+void toggleCheck(int newValue, int oldValue, const byte PINS[], byte PINCOUNT, const String CODES[][2]){
 	int changeValue = (oldValue ^ newValue);	
 	for (byte x = 0; x < PINCOUNT; x++){
 		// If the bit is different, send the code
@@ -285,36 +298,6 @@ void checkToggles(int newValue, int oldValue, const byte PINS[], byte PINCOUNT, 
 			}
 		}
 	}
-}
-
-int switchCheck (int oldValue, int newValue, int switchType) {
-  // Check if new value is different than previous value
-  if(newValue == oldValue) {
-     // If it hasn't changed, return the old value
-    return oldValue;
-    } else {
-    // Check if the difference is in the toggle or a multi-pin switch
-    switch (switchType) {
-		case TOGGLEVAL: {
-			checkToggles(newValue, oldValue, TOGGLEPINS, TOGGLEPINCOUNT, TOGGLECODES);
-		}
-		break;
-		case FUELTANKVAL: {
-			checkMultipin(newValue, FUELTANKPINS, FUELTANKPINCOUNT, FUELTANKCODES, FUELTANKINPUTCODES, FUELTANKINPUTCODECOUNT);
-		}
-		break;
-		case FLAPVAL: {
-			checkMultipin(newValue, FLAPPINS, FLAPPINCOUNT, FLAPCODES, FLAPINPUTCODES, FLAPINPUTCODECOUNT);
-		}
-		break;
-		case COWLFLAPVAL: {
-			checkMultipin(newValue, COWLFLAPPINS, COWLFLAPPINCOUNT, COWLFLAPCODES, COWLFLAPINPUTCODES, COWLFLAPINPUTCODECOUNT);
-		}
-		break;
-	}
-    // Return the new value to be saved as the new old value
-    return newValue;
-  }
 }
 
 byte digitalDebounce (byte newValue, byte pin){
