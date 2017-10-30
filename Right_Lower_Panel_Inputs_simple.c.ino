@@ -59,12 +59,12 @@ const byte MIXTUREPIN = A2;
 // Other constants
 const int DELAY = 10;    // Time interval between checking the switch status (in milliseconds)
 const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values of each input are reversed (1 = Off, 0 = On)
-const int THROTTLEVAL = 1;  // The numerical ID of the IGNITION code list
-const int PROPELLERVAL = 2;  // The numerical ID of the IGNITION code list
-const int MIXTUREVAL = 3;  // The numerical ID of the IGNITION code list
+//const int THROTTLEVAL = 1;  // The numerical ID of the IGNITION code list
+//const int PROPELLERVAL = 2;  // The numerical ID of the IGNITION code list
+//const int MIXTUREVAL = 3;  // The numerical ID of the IGNITION code list
 const int DEBOUNCE = 1;  // Amount of time in milliseconds to debounce
 const int DEBOUNCETRIES = 1; // Number of times the debounce function should check the value
-const int ENGINETOLERANCE = 10; // Amount the engine setting change should be greater than to trigger a change (out of 1024)
+const int ANALOGTOLERANCE = 10; // Amount the engine setting change should be greater than to trigger a change (out of 1024)
 const long ANALOGMIN = 30; 		// The analog signal that will be equal to 0
 const long ANALOGMAX = 994; 	// The analog signal that will be equal to 100
 const int ELEVATORTRIM_REDUCER = 1;	 // Number of detents for each print
@@ -139,7 +139,7 @@ void loop(){
 	
 	// ---------- Read the rotary encoder inputs ---------------------------
 	elevatortrim_newA = digitalRead(ELEVATORTRIMPINS[0]);
-	elevatortrim_newB = digitalRead(ELEVATORTRIMPINS[1])
+	elevatortrim_newB = digitalRead(ELEVATORTRIMPINS[1]);
 	
 	// ---------- Read the digital inputs ---------------------------
 	// Toggle pins
@@ -161,9 +161,10 @@ void loop(){
 	
 	// ------- Look for changes and send codes -----------
 	// Analog controls
-	throttle_old = analogCheck(throttle_old, throttle_new, THROTTLEVAL);
-	propeller_old = analogCheck(propeller_old, propeller_new, PROPELLERVAL);
-	mixture_old = analogCheck(mixture_old, mixture_new, MIXTUREVAL);
+	throttle_old = analogCheck(throttle_old, throttle_new, THROTTLECODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
+	propeller_old = analogCheck(propeller_old, propeller_new, PROPELLERCODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
+	mixture_old = analogCheck(mixture_old, mixture_new, MIXTURECODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
+	//int analogCheck (int oldValue, int newValue, const int code, const int min, const int max, const int tolerance){
 	
 	// Elevator Trim
 	encoderCheck(elevatortrim_oldA, elevatortrim_oldB, elevatortrim_newA, elevatortrim_newB, ELEVATORTRIMCODES); 
@@ -200,34 +201,20 @@ void loop(){
 	// static int loopCount = loopCount + 1; 
 }
 
-int analogCheck (int oldValue, int newValue, int switchType){
+int analogCheck (int oldValue, int newValue, const String code, const int min, const int max, const int tolerance){
 	int change = oldValue - newValue;
-	if (abs(change) < ENGINETOLERANCE){
+	if (abs(change) < tolerance){
 		return oldValue; 
 	} else {
 		long output;
-		if (newValue <= ANALOGMIN){
+		if (newValue <= min){
 			output = 0L; 
-		} else if (newValue >= ANALOGMAX){
+		} else if (newValue >= max){
 			output = 100L; 
 		} else {
 			output = (newValue*101L)/1024L;
 		}
-		String outputString;
-		switch (switchType) {
-			case THROTTLEVAL: {
-				outputString = String(THROTTLECODE + output);
-			}
-			break;
-			case PROPELLERVAL: {
-				outputString = String(PROPELLERCODE + output);
-			}
-			break;
-			case MIXTUREVAL: {
-				outputString = String(MIXTURECODE + output);
-			}
-			break;
-		}
+		String outputString = String(code + output);
 		Serial.println(outputString);
 		return newValue;
 	}
