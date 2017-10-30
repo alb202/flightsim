@@ -72,15 +72,15 @@ const int ELEVATORTRIM_MULTIPLIER = 1;	// Number of prints for each detent
          
 void setup() {
 	// Open the serial connection
-	//Serial.begin(115200);
-	Serial.begin(9600);
+	Serial.begin(115200);
+	//Serial.begin(9600);
 
 	// Initialize the digital pins as input
 	for (byte x = 0; x < TOGGLEPINCOUNT; x++){
 		pinMode(TOGGLEPINS[x], INPUT_PULLUP);
 	}
 	for (byte x = 0; x < ELEVATORTRIMPINCOUNT; x++){
-		pinMode(ELEVATORTRIMPINS[x], INPUT);
+		pinMode(ELEVATORTRIMPINS[x], INPUT_PULLUP);
 	}
 	for (byte x = 0; x < FUELTANKPINCOUNT; x++){
 		pinMode(FUELTANKPINS[x], INPUT_PULLUP);
@@ -102,21 +102,23 @@ void setup() {
 void loop(){
 	Serial.flush();
 	
+	/*
 	// Measure the time of each loop
 	static unsigned long old_time;
 	static unsigned long new_time;
 	new_time = millis();
 	Serial.println(new_time-old_time);
 	old_time = new_time;
+	*/
 	
 	// -------------------------------------
 	// Starting values for inputs
 	static int toggle_old = flipOneBit(0); 
 	static int toggle_new = 0; 
-	static int elevatortrim_old = 0;
-	static int elevatortrim_newA = 0;
-	static int elevatortrim_newB = 0;
-	static int elevatortrim_pos = 0;
+	static int elevatortrim_oldA = HIGH;
+	static int elevatortrim_oldB = HIGH;
+	int elevatortrim_newA = 0; 
+	int elevatortrim_newB = 0; 
 	static int fueltank_old = FUELTANKINPUTCODES[0];
 	static int fueltank_new = 0;
 	static int flap_old = FLAPINPUTCODES[0];
@@ -137,7 +139,7 @@ void loop(){
 	
 	// ---------- Read the rotary encoder inputs ---------------------------
 	elevatortrim_newA = digitalRead(ELEVATORTRIMPINS[0]);
-	elevatortrim_newB = digitalRead(ELEVATORTRIMPINS[1]);
+	elevatortrim_newB = digitalRead(ELEVATORTRIMPINS[1])
 	
 	// ---------- Read the digital inputs ---------------------------
 	// Toggle pins
@@ -164,8 +166,8 @@ void loop(){
 	mixture_old = analogCheck(mixture_old, mixture_new, MIXTUREVAL);
 	
 	// Elevator Trim
-	elevatortrim_old = encoderCheck(elevatortrim_old, elevatortrim_newA, elevatortrim_newB, elevatortrim_pos, ELEVATORTRIM_REDUCER, ELEVATORTRIM_MULTIPLIER);
-	
+	encoderCheck(elevatortrim_oldA, elevatortrim_oldB, elevatortrim_newA, elevatortrim_newB, ELEVATORTRIMCODES); 
+
 	// Toggle Switches
 	if (toggle_old != toggle_new){
 		toggleCheck(toggle_new, toggle_old, TOGGLEPINS, TOGGLEPINCOUNT, TOGGLECODES);
@@ -231,41 +233,22 @@ int analogCheck (int oldValue, int newValue, int switchType){
 	}
 }
 
-int encoderCheck (int oldValue, int newValueA, int newValueB, int& elevatortrim_pos, int reduce, int multiply) {
-	// If the first connector has changed ...
-	if ((oldValue == LOW) && (newValueA == HIGH)) {
-		// If the second connector is low ...
-		if (newValueB == LOW){
-			// Decrement the position by 1
-			elevatortrim_pos--;
-			// If the position % the reducer number is 0, then print the code
-			if (elevatortrim_pos % reduce == 0) {
-				// Call the print function
-				printEncoderCode(ELEVATORTRIMCODES[0], multiply);
-			}	
-		}
-		// If the second connector is high ...
-		if (newValueB == HIGH){
-			// Increment the position by 1
-			elevatortrim_pos++;
-			// If the position % the reducer number is 0, then print the code
-			if (elevatortrim_pos % reduce == 0) {
-				// Call the print function
-				printEncoderCode(ELEVATORTRIMCODES[1], multiply);
-			}
-		}
-		return newValueA; // Set the new connector A status to the old connector A status
-	} else {
-		return oldValue; 
-	}
-}
-
-void printEncoderCode(String output, int multi){
-	// For the number of times of the multiplier, output the code
-	for(int i = 0; i < multi; i++){
-		Serial.print (output);
-		Serial.print ("\n");
-	}
+void encoderCheck(int &oldA, int &oldB, int newA, int newB, const String codes[]) {
+  int result = 0;
+  if (newA != oldA || newB != oldB) { //if the value of clkPin or the dtPin has changed
+    if (oldA == HIGH && newA == LOW) {
+      result = (oldB * 2 - 1);
+    }
+  }
+  oldA = newA;
+  oldB = newB;
+  
+  if (result < 0){
+    Serial.println(codes[0]);
+  }
+  if (result > 0){
+    Serial.println(codes[1]);
+  }
 }
 
 void multipinCheck(int newValue, const byte PINS[], byte PINCOUNT, const String CODES[], const byte INPUTCODES[], byte INPUTCODECOUNT){
