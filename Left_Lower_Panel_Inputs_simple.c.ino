@@ -1,4 +1,25 @@
 // -----------------------------------------------------------------------------------------------------
+/*
+battery			1
+alternator		1
+avionics		1
+fuel pump		1
+beacon			1
+landing light	1
+taxi light		1
+navigation light1
+strobe light	1
+pitot heat		1
+parking brake	1
+landing gear	1
+carb heat		1
+engine off		1
+magneto R		1
+magneto L		1
+magneto both	1
+engine start	1
+*/
+// -----------------------------------------------------------------------------------------------------
 // Set the codes that are transmitted to the computer when a switch is used
 // Set the pin combinations that are used in any multi-pin inputs, using binary, and the number of unique combinations
 // Set the pin numbers to be used for each input, and the number of pins used
@@ -7,7 +28,7 @@
 const String TOGGLECODES[][2] = {
   {"E20","E21"}, {"E17","E18"}, {"A430","A431"}, {"NONE","NONE"},
   {"F020","F021"}, {"C420","C421"}, {"C430","C431"}, {"C440","C441"},
-  {"C410", "C411"}, {"C450","C451"}, {"C06","C05"}, {"BRAKE ON","BRAKE OFF"}, {"GEAR DOWN", "GEAR UP"}, {"CARB HEAT ON", "CARB HEAT OFF"}
+  {"C410", "C411"}, {"C450","C451"}, {"C06","C05"}, {"C041","C040"}, {"C02", "C01"}, {"F13", "F14"}
   };
 const byte TOGGLEPINS[] = {2,3,4,5,6,7,8,9,10,11,12,17,18,19};
 const byte TOGGLEPINCOUNT = 14; 
