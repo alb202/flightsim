@@ -17,7 +17,7 @@ mixture			A1
 // Set the pin numbers to be used for each input, and the number of pins used
 
 // Codes for toggle switches; in each pair, the first value is 'off' and the second is 'on'
-const String TOGGLECODES[][2] = { {"F30","F30"}, {"C500","C501"}, {"XXX","XXX"} };
+const String TOGGLECODES[][2] = { {"F32","F33"}, {"C500","C501"}, {"XXX","XXX"} };
 const byte TOGGLEPINS[3] = {2,3,4};
 const byte TOGGLEPINCOUNT = 3; 
 
