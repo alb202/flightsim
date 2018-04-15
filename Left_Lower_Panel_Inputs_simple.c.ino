@@ -24,6 +24,9 @@ engine start	1
 // Set the pin combinations that are used in any multi-pin inputs, using binary, and the number of unique combinations
 // Set the pin numbers to be used for each input, and the number of pins used
 
+//#include "Arduino.h"
+//#include "string.h"
+
 // Codes for toggle switches; in each pair, the first value is 'off' and the second is 'on'
 const String TOGGLECODES[][2] = {
   {"E20","E21"}, {"E17","E18"}, {"A430","A431"}, {"NONE","NONE"},
@@ -44,13 +47,13 @@ const byte IGNITIONPINCOUNT = 3;
 // Other constants
 const int DELAY = 10;    // Time interval between checking the switch status (in milliseconds)
 const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values of each input are reversed (1 = Off, 0 = On)
-const int DEBOUNCE = 1;  // Amount of time in milliseconds to debounce
+const int DEBOUNCE = 100;  // Amount of time in milliseconds to debounce
 const int DEBOUNCETRIES = 1; // Number of times the debounce function should check the value
          
 void setup() {
 	// Open the serial connection
-	//Serial.begin(115200);
-	Serial.begin(9600);
+	Serial.begin(115200);
+	//Serial.begin(9600);
 
 	// Initialize the digital pins as input
 	for (byte x = 0; x < TOGGLEPINCOUNT; x++){
