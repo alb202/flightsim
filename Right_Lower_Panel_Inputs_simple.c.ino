@@ -1,15 +1,15 @@
 // -----------------------------------------------------------------------------------------------------
 /*
 fuel shuttoff   1
-cabin lights	1
-Static air		1
-fuel tanks		2
-elevator trim	2
-cowl flaps		3
-flaps			3
-throttle		A1
-prop			A1			
-mixture			A1
+cabin lights  1
+Static air    1
+fuel tanks    2
+elevator trim 2
+cowl flaps    3
+flaps     3
+throttle    A1
+prop      A1      
+mixture     A1
 */
 // -----------------------------------------------------------------------------------------------------
 // Set the codes that are transmitted to the computer when a switch is used
@@ -34,7 +34,7 @@ const byte FUELTANKPINS[2] = {5,6};
 const byte FUELTANKPINCOUNT = 2;
 
 // Codes for flaps
-const String FLAPCODES[4] = {"C17000", "C17033", "C17066", "C17100"};
+const String FLAPCODES[4] = {"C14", "C15"};
 const byte FLAPINPUTCODES[4] = {B001, B011, B010, B110};  // Input codes that map the input from the cowl flap switch to the output codes
 const byte FLAPINPUTCODECOUNT = 4; 
 const byte FLAPPINS[3] = {7,8,9};
@@ -65,159 +65,188 @@ const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values of each input 
 const int DEBOUNCE = 1;  // Amount of time in milliseconds to debounce
 const int DEBOUNCETRIES = 1; // Number of times the debounce function should check the value
 const int ANALOGTOLERANCE = 10; // Amount the engine setting change should be greater than to trigger a change (out of 1024)
-const long ANALOGMIN = 30; 		// The analog signal that will be equal to 0
-const long ANALOGMAX = 994; 	// The analog signal that will be equal to 100
-const int ELEVATORTRIM_REDUCER = 1;	 // Number of detents for each print
-const int ELEVATORTRIM_MULTIPLIER = 1;	// Number of prints for each detent
+const long ANALOGMIN = 30;    // The analog signal that will be equal to 0
+const long ANALOGMAX = 994;   // The analog signal that will be equal to 100
+const int ELEVATORTRIM_REDUCER = 1;  // Number of detents for each print
+const int ELEVATORTRIM_MULTIPLIER = 1;  // Number of prints for each detent
          
 void setup() {
-	// Open the serial connection
-	Serial.begin(115200);
-	//Serial.begin(9600);
+  // Open the serial connection
+  Serial.begin(115200);
+  //Serial.begin(9600);
 
-	// Initialize the digital pins as input
-	for (byte x = 0; x < TOGGLEPINCOUNT; x++){
-		pinMode(TOGGLEPINS[x], INPUT_PULLUP);
-	}
-	for (byte x = 0; x < ELEVATORTRIMPINCOUNT; x++){
-		pinMode(ELEVATORTRIMPINS[x], INPUT_PULLUP);
-	}
-	for (byte x = 0; x < FUELTANKPINCOUNT; x++){
-		pinMode(FUELTANKPINS[x], INPUT_PULLUP);
-	}
-	for (byte x = 0; x < FLAPPINCOUNT; x++){
-		pinMode(FLAPPINS[x], INPUT_PULLUP);
-	}
-	for (byte x = 0; x < COWLFLAPPINCOUNT; x++){
-		pinMode(COWLFLAPPINS[x], INPUT_PULLUP);
-	}
-	
-	// Initialize the analog pins
-	pinMode(THROTTLEPIN, INPUT);
-	pinMode(PROPELLERPIN, INPUT);
-	pinMode(MIXTUREPIN, INPUT);
+  // Initialize the digital pins as input
+  for (byte x = 0; x < TOGGLEPINCOUNT; x++){
+    pinMode(TOGGLEPINS[x], INPUT_PULLUP);
+  }
+  for (byte x = 0; x < ELEVATORTRIMPINCOUNT; x++){
+    pinMode(ELEVATORTRIMPINS[x], INPUT_PULLUP);
+  }
+  for (byte x = 0; x < FUELTANKPINCOUNT; x++){
+    pinMode(FUELTANKPINS[x], INPUT_PULLUP);
+  }
+  for (byte x = 0; x < FLAPPINCOUNT; x++){
+    pinMode(FLAPPINS[x], INPUT_PULLUP);
+  }
+  for (byte x = 0; x < COWLFLAPPINCOUNT; x++){
+    pinMode(COWLFLAPPINS[x], INPUT_PULLUP);
+  }
+  
+  // Initialize the analog pins
+  pinMode(THROTTLEPIN, INPUT);
+  pinMode(PROPELLERPIN, INPUT);
+  pinMode(MIXTUREPIN, INPUT);
 
 }
 
 void loop(){
-	Serial.flush();
-	
-	/*
-	// Measure the time of each loop
-	static unsigned long old_time;
-	static unsigned long new_time;
-	new_time = millis();
-	Serial.println(new_time-old_time);
-	old_time = new_time;
-	*/
-	
-	// -------------------------------------
-	// Starting values for inputs
-	static int toggle_old = flipOneBit(0); 
-	static int toggle_new = 0; 
-	static int elevatortrim_oldA = HIGH;
-	static int elevatortrim_oldB = HIGH;
-	int elevatortrim_newA = 0; 
-	int elevatortrim_newB = 0; 
-	static int fueltank_old = FUELTANKINPUTCODES[0];
-	static int fueltank_new = 0;
-	static int flap_old = FLAPINPUTCODES[0];
-	static int flap_new = 0;
-	static int cowlflap_old = COWLFLAPINPUTCODES[0];
-	static int cowlflap_new = 0;
-	static int throttle_old = 0;
-	static int throttle_new = 0;
-	static int propeller_old = 0;
-	static int propeller_new = 0;
-	static int mixture_old = 0;
-	static int mixture_new = 0;
+  Serial.flush();
   
-	// ---------- Read the analog inputs ---------------------------
-	throttle_new = analogRead(THROTTLEPIN);
-	propeller_new = analogRead(PROPELLERPIN);
-	mixture_new = analogRead(MIXTUREPIN);
-	
-	// ---------- Read the rotary encoder inputs ---------------------------
-	elevatortrim_newA = digitalRead(ELEVATORTRIMPINS[0]);
-	elevatortrim_newB = digitalRead(ELEVATORTRIMPINS[1]);
-	
-	// ---------- Read the digital inputs ---------------------------
-	// Toggle pins
-	for (byte x = 0; x < TOGGLEPINCOUNT; x++){
-		bitWrite(toggle_new, x, digitalRead(TOGGLEPINS[x]));
-	}
-	// Fuel tank pins
-	for (byte x = 0; x < FUELTANKPINCOUNT; x++){
-		bitWrite(fueltank_new, x, digitalRead(FUELTANKPINS[x]));
-	}
-	// Flap pins
-	for (byte x = 0; x < FLAPPINCOUNT; x++){
-		bitWrite(flap_new, x, digitalRead(FLAPPINS[x]));
-	}
-	// Cowl flap pins
-	for (byte x = 0; x < COWLFLAPPINCOUNT; x++){
-		bitWrite(cowlflap_new, x, digitalRead(COWLFLAPPINS[x]));
-	}
-	
-	// ------- Look for changes and send codes -----------
-	// Analog controls
-	throttle_old = analogCheck(throttle_old, throttle_new, THROTTLECODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
-	propeller_old = analogCheck(propeller_old, propeller_new, PROPELLERCODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
-	mixture_old = analogCheck(mixture_old, mixture_new, MIXTURECODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
-	//int analogCheck (int oldValue, int newValue, const int code, const int min, const int max, const int tolerance){
-	
-	// Elevator Trim
-	encoderCheck(elevatortrim_oldA, elevatortrim_oldB, elevatortrim_newA, elevatortrim_newB, ELEVATORTRIMCODES); 
+  /*
+  // Measure the time of each loop
+  static unsigned long old_time;
+  static unsigned long new_time;
+  new_time = millis();
+  Serial.println(new_time-old_time);
+  old_time = new_time;
+  */
+  
+  // -------------------------------------
+  // Starting values for inputs
+  static int toggle_old = flipOneBit(0); 
+  static int toggle_new = 0; 
+  static int elevatortrim_oldA = HIGH;
+  static int elevatortrim_oldB = HIGH;
+  int elevatortrim_newA = 0; 
+  int elevatortrim_newB = 0; 
+  static int fueltank_old = FUELTANKINPUTCODES[0];
+  static int fueltank_new = 0;
+  static int flap_old = FLAPINPUTCODES[0];
+  static int flap_new = 0;
+  static int cowlflap_old = COWLFLAPINPUTCODES[0];
+  static int cowlflap_new = 0;
+  static int throttle_old = 0;
+  static int throttle_new = 0;
+  static int propeller_old = 0;
+  static int propeller_new = 0;
+  static int mixture_old = 0;
+  static int mixture_new = 0;
+  
+  // ---------- Read the analog inputs ---------------------------
+  throttle_new = analogRead(THROTTLEPIN);
+  propeller_new = analogRead(PROPELLERPIN);
+  mixture_new = analogRead(MIXTUREPIN);
+  
+  // ---------- Read the rotary encoder inputs ---------------------------
+  elevatortrim_newA = digitalRead(ELEVATORTRIMPINS[0]);
+  elevatortrim_newB = digitalRead(ELEVATORTRIMPINS[1]);
+  
+  // ---------- Read the digital inputs ---------------------------
+  // Toggle pins
+  for (byte x = 0; x < TOGGLEPINCOUNT; x++){
+    bitWrite(toggle_new, x, digitalRead(TOGGLEPINS[x]));
+  }
+  // Fuel tank pins
+  for (byte x = 0; x < FUELTANKPINCOUNT; x++){
+    bitWrite(fueltank_new, x, digitalRead(FUELTANKPINS[x]));
+  }
+  // Flap pins
+  for (byte x = 0; x < FLAPPINCOUNT; x++){
+    bitWrite(flap_new, x, digitalRead(FLAPPINS[x]));
+  }
+  // Cowl flap pins
+  for (byte x = 0; x < COWLFLAPPINCOUNT; x++){
+    bitWrite(cowlflap_new, x, digitalRead(COWLFLAPPINS[x]));
+  }
+  
+  // ------- Look for changes and send codes -----------
+  // Analog controls
+  throttle_old = analogCheck(throttle_old, throttle_new, THROTTLECODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
+  propeller_old = analogCheck(propeller_old, propeller_new, PROPELLERCODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
+  mixture_old = analogCheck(mixture_old, mixture_new, MIXTURECODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
+  //int analogCheck (int oldValue, int newValue, const int code, const int min, const int max, const int tolerance){
+  
+  // Elevator Trim
+  encoderCheck(elevatortrim_oldA, elevatortrim_oldB, elevatortrim_newA, elevatortrim_newB, ELEVATORTRIMCODES); 
 
-	// Toggle Switches
-	if (toggle_old != toggle_new){
-		toggleCheck(toggle_new, toggle_old, TOGGLEPINS, TOGGLEPINCOUNT, TOGGLECODES);
-		toggle_old = toggle_new;
-	}
+  // Toggle Switches
+  if (toggle_old != toggle_new){
+    toggleCheck(toggle_new, toggle_old, TOGGLEPINS, TOGGLEPINCOUNT, TOGGLECODES);
+    toggle_old = toggle_new;
+  }
 
-	// Fuel Tanks
-	if (fueltank_old != fueltank_new){
-		multipinCheck(fueltank_new, FUELTANKPINS, FUELTANKPINCOUNT, FUELTANKCODES, FUELTANKINPUTCODES, FUELTANKINPUTCODECOUNT);
-		fueltank_old = fueltank_new; 
-	}
+  // Fuel Tanks
+  if (fueltank_old != fueltank_new){
+    multipinCheck(fueltank_new, FUELTANKPINS, FUELTANKPINCOUNT, FUELTANKCODES, FUELTANKINPUTCODES, FUELTANKINPUTCODECOUNT);
+    fueltank_old = fueltank_new; 
+  }
 
-	// Flaps
-	if (flap_old != flap_new){
-		multipinCheck(flap_new, FLAPPINS, FLAPPINCOUNT, FLAPCODES, FLAPINPUTCODES, FLAPINPUTCODECOUNT);
-		flap_old = flap_new;
-	}
-	
-	// Cowl Flaps
-	if (cowlflap_old != cowlflap_new){
-		multipinCheck(cowlflap_new, COWLFLAPPINS, COWLFLAPPINCOUNT, COWLFLAPCODES, COWLFLAPINPUTCODES, COWLFLAPINPUTCODECOUNT);
-		cowlflap_old = cowlflap_new;
-	}		
-	
-	// Delay the loop
-	delay(DELAY);
+  // Flaps
+  if (flap_old != flap_new){
+    leverCheck(flap_old, flap_new, FLAPPINS, FLAPPINCOUNT, FLAPCODES, FLAPINPUTCODES, FLAPINPUTCODECOUNT);
+    flap_old = flap_new;
+  }
+  
+  // Cowl Flaps
+  if (cowlflap_old != cowlflap_new){
+    multipinCheck(cowlflap_new, COWLFLAPPINS, COWLFLAPPINCOUNT, COWLFLAPCODES, COWLFLAPINPUTCODES, COWLFLAPINPUTCODECOUNT);
+    cowlflap_old = cowlflap_new;
+  }   
+  
+  // Delay the loop
+  delay(DELAY);
 
-	// Ouput loop counter for testing and increment
-	// Serial.println(loopCount);
-	// static int loopCount = loopCount + 1; 
+  // Ouput loop counter for testing and increment
+  // Serial.println(loopCount);
+  // static int loopCount = loopCount + 1; 
 }
+  //
+  void leverCheck(int oldValue, int newValue, const byte PINS[], byte PINCOUNT, const String CODES[], const byte INPUTCODES[], const byte INPUTCODECOUNT){
+   bool isStable = 1;
+    for (byte x = 0; x < PINCOUNT; x++){
+    // Check the stability of the reading
+      if (isStable == 1){
+        isStable = digitalDebounce(bitRead(newValue, x), PINS[x]);
+      } 
+    }
+    if (isStable == 1){
+      byte tmpOld = 0; 
+      byte tmpNew = 0;
+      for (byte x = 0; x < INPUTCODECOUNT; x++){
+        if (flipAllBits(oldValue, PINCOUNT) == INPUTCODES[x]){
+          tmpOld = x; 
+        }
+        if (flipAllBits(newValue, PINCOUNT) == INPUTCODES[x]){
+          tmpNew = x; 
+        }
+      }
+      Serial.println(flipAllBits(newValue, PINCOUNT));
+      if (tmpNew > tmpOld){
+        Serial.println(CODES[1]);
+      }
+      if (tmpNew < tmpOld){
+        Serial.println(CODES[0]);
+      }
+    }
+  }
 
 int analogCheck (int oldValue, int newValue, const String code, const int min, const int max, const int tolerance){
-	int change = oldValue - newValue;
-	if (abs(change) < tolerance){
-		return oldValue; 
-	} else {
-		long output;
-		if (newValue <= min){
-			output = 0L; 
-		} else if (newValue >= max){
-			output = 100L; 
-		} else {
-			output = (newValue*101L)/1024L;
-		}
-		String outputString = String(code + output);
-		Serial.println(outputString);
-		return newValue;
-	}
+  int change = oldValue - newValue;
+  if (abs(change) < tolerance){
+    return oldValue; 
+  } else {
+    long output;
+    if (newValue <= min){
+      output = 0L; 
+    } else if (newValue >= max){
+      output = 100L; 
+    } else {
+      output = (newValue*101L)/1024L;
+    }
+    String outputString = String(code + output);
+    Serial.println(outputString);
+    return newValue;
+  }
 }
 
 void encoderCheck(int &oldA, int &oldB, int newA, int newB, const String codes[]) {
@@ -239,35 +268,35 @@ void encoderCheck(int &oldA, int &oldB, int newA, int newB, const String codes[]
 }
 
 void multipinCheck(int newValue, const byte PINS[], byte PINCOUNT, const String CODES[], const byte INPUTCODES[], byte INPUTCODECOUNT){
-	bool isStable = 1;
-	for (byte x = 0; x < PINCOUNT; x++){
-	// Check the stability of the reading
-		if (isStable == 1){
-			isStable = digitalDebounce(bitRead(newValue, x), PINS[x]);
-		}	
-	}
-	if (isStable == 1){
-		for (byte x = 0; x < INPUTCODECOUNT; x++){
-			//if (flipIgnition(newValue) == INPUTCODES[x]){
-			if (flipAllBits(newValue, PINCOUNT) == INPUTCODES[x]){
-					Serial.println(CODES[x]);
-			}
-		}
-	} 
+  bool isStable = 1;
+  for (byte x = 0; x < PINCOUNT; x++){
+  // Check the stability of the reading
+    if (isStable == 1){
+      isStable = digitalDebounce(bitRead(newValue, x), PINS[x]);
+    } 
+  }
+  if (isStable == 1){
+    for (byte x = 0; x < INPUTCODECOUNT; x++){
+      //if (flipIgnition(newValue) == INPUTCODES[x]){
+      if (flipAllBits(newValue, PINCOUNT) == INPUTCODES[x]){
+          Serial.println(CODES[x]);
+      }
+    }
+  } 
 }
 
 void toggleCheck(int newValue, int oldValue, const byte PINS[], byte PINCOUNT, const String CODES[][2]){
-	int changeValue = (oldValue ^ newValue);	
-	for (byte x = 0; x < PINCOUNT; x++){
-		// If the bit is different, send the code
-		if (bitRead(changeValue, x) == 1){
-			// Check the stability of the reading
-			if (digitalDebounce(bitRead(newValue, x), PINS[x]) == 1){
-				// Lookup the code to send
-				Serial.println(CODES[x][flipOneBit(bitRead(newValue, x))]); 
-			}
-		}
-	}
+  int changeValue = (oldValue ^ newValue);  
+  for (byte x = 0; x < PINCOUNT; x++){
+    // If the bit is different, send the code
+    if (bitRead(changeValue, x) == 1){
+      // Check the stability of the reading
+      if (digitalDebounce(bitRead(newValue, x), PINS[x]) == 1){
+        // Lookup the code to send
+        Serial.println(CODES[x][flipOneBit(bitRead(newValue, x))]); 
+      }
+    }
+  }
 }
 
 byte digitalDebounce (byte newValue, byte pin){
@@ -292,10 +321,10 @@ byte flipOneBit(byte value){
 }
 
 int flipAllBits(int value, int pins) {
-	if (FLIPONOFF == true){
-		int mask = (1 << pins) - 1;
-		return ~value & mask;
-	} else{
-		return value;
-	}
+  if (FLIPONOFF == true){
+    int mask = (1 << pins) - 1;
+    return ~value & mask;
+  } else{
+    return value;
+  }
 }
