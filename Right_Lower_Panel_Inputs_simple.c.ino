@@ -17,7 +17,7 @@ mixture     A1
 // Set the pin numbers to be used for each input, and the number of pins used
 
 // Codes for toggle switches; in each pair, the first value is 'off' and the second is 'on'
-const String TOGGLECODES[][2] = { {"F32","F33"}, {"C500","C501"}, {"XXX","XXX"} };
+const String TOGGLECODES[][2] = {{"XXX","XXX"},{"F32","F33"}, {"F11","F10"}};
 const byte TOGGLEPINS[3] = {2,3,4};
 const byte TOGGLEPINCOUNT = 3; 
 
@@ -27,7 +27,7 @@ const byte ELEVATORTRIMPINS[2] = {18,19};
 const byte ELEVATORTRIMPINCOUNT = 2;
 
 // Codes for fuel tanks
-const String FUELTANKCODES[3] = {"F041", "F042", "F043"};
+const String FUELTANKCODES[3] = {"F041", "F043", "F042"};
 const byte FUELTANKINPUTCODES[3] = {B00, B01, B10};  // Input codes that map the input from the fuel tank switch to the output codes
 const byte FUELTANKINPUTCODECOUNT = 3;
 const byte FUELTANKPINS[2] = {5,6};
@@ -64,9 +64,13 @@ const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values of each input 
 //const int MIXTUREVAL = 3;  // The numerical ID of the IGNITION code list
 const int DEBOUNCE = 1;  // Amount of time in milliseconds to debounce
 const int DEBOUNCETRIES = 1; // Number of times the debounce function should check the value
-const int ANALOGTOLERANCE = 10; // Amount the engine setting change should be greater than to trigger a change (out of 1024)
-const long ANALOGMIN = 30;    // The analog signal that will be equal to 0
-const long ANALOGMAX = 994;   // The analog signal that will be equal to 100
+const int ANALOGTOLERANCE = 3; // Amount the engine setting change should be greater than to trigger a change (out of 1024)
+const long THROTTLEMIN = 30;    // The analog signal that will be equal to 0
+const long THROTTLEMAX = 200;   // The analog signal that will be equal to 100
+const long PROPELLERMIN = 20;    // The analog signal that will be equal to 0
+const long PROPELLERMAX = 210;   // The analog signal that will be equal to 100
+const long MIXTUREMIN = 20;    // The analog signal that will be equal to 0
+const long MIXTUREMAX = 210;   // The analog signal that will be equal to 100
 const int ELEVATORTRIM_REDUCER = 1;  // Number of detents for each print
 const int ELEVATORTRIM_MULTIPLIER = 1;  // Number of prints for each detent
          
@@ -93,9 +97,9 @@ void setup() {
   }
   
   // Initialize the analog pins
-  pinMode(THROTTLEPIN, INPUT);
-  pinMode(PROPELLERPIN, INPUT);
-  pinMode(MIXTUREPIN, INPUT);
+  pinMode(THROTTLEPIN, INPUT_PULLUP);
+  pinMode(PROPELLERPIN, INPUT_PULLUP);
+  pinMode(MIXTUREPIN, INPUT_PULLUP);
 
 }
 
@@ -161,9 +165,9 @@ void loop(){
   
   // ------- Look for changes and send codes -----------
   // Analog controls
-  throttle_old = analogCheck(throttle_old, throttle_new, THROTTLECODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
-  propeller_old = analogCheck(propeller_old, propeller_new, PROPELLERCODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
-  mixture_old = analogCheck(mixture_old, mixture_new, MIXTURECODE, ANALOGMIN, ANALOGMAX, ANALOGTOLERANCE);
+  throttle_old = analogCheck(throttle_old, throttle_new, THROTTLECODE, THROTTLEMIN, THROTTLEMAX, ANALOGTOLERANCE);
+  propeller_old = analogCheck(propeller_old, propeller_new, PROPELLERCODE, PROPELLERMIN, PROPELLERMAX, ANALOGTOLERANCE);
+  mixture_old = analogCheck(mixture_old, mixture_new, MIXTURECODE, MIXTUREMIN, MIXTUREMAX, ANALOGTOLERANCE);
   //int analogCheck (int oldValue, int newValue, const int code, const int min, const int max, const int tolerance){
   
   // Elevator Trim
@@ -230,18 +234,19 @@ void loop(){
     }
   }
 
-int analogCheck (int oldValue, int newValue, const String code, const int min, const int max, const int tolerance){
+int analogCheck (int oldValue, int newValue, const String code, const int inputmin, const int inputmax, const int tolerance){
   int change = oldValue - newValue;
   if (abs(change) < tolerance){
     return oldValue; 
   } else {
     long output;
-    if (newValue <= min){
+    if (newValue <= inputmin){
       output = 0L; 
-    } else if (newValue >= max){
+    } else if (newValue >= inputmax){
       output = 100L; 
     } else {
-      output = (newValue*101L)/1024L;
+      output = ((((newValue - inputmin)*100L)/(inputmax - inputmin)));
+      //output = (newValue*101L)/1024L;
     }
     String outputString = String(code + output);
     Serial.println(outputString);
