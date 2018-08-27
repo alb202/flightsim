@@ -17,12 +17,12 @@ mixture     A1
 // Set the pin numbers to be used for each input, and the number of pins used
 
 // Codes for toggle switches; in each pair, the first value is 'off' and the second is 'on'
-const String TOGGLECODES[][2] = {{"XXX","XXX"},{"F32","F33"}, {"F11","F10"}};
+const String TOGGLECODES[][2] = {{"XXX","XXX"},{"Y170","Y170"}, {"F11","F10"}};
 const byte TOGGLEPINS[3] = {2,3,4};
 const byte TOGGLEPINCOUNT = 3; 
 
 // Codes for elevator trim
-const String ELEVATORTRIMCODES[2] = {"C18", "C19"};
+const String ELEVATORTRIMCODES[2] = {"C19", "C18"};
 const byte ELEVATORTRIMPINS[2] = {18,19};
 const byte ELEVATORTRIMPINCOUNT = 2;
 
@@ -34,7 +34,7 @@ const byte FUELTANKPINS[2] = {5,6};
 const byte FUELTANKPINCOUNT = 2;
 
 // Codes for flaps
-const String FLAPCODES[4] = {"C14", "C15"};
+const String FLAPCODES[4] = {"C15", "C14"};
 const byte FLAPINPUTCODES[4] = {B001, B011, B010, B110};  // Input codes that map the input from the cowl flap switch to the output codes
 const byte FLAPINPUTCODECOUNT = 4; 
 const byte FLAPPINS[3] = {7,8,9};
@@ -48,16 +48,16 @@ const byte COWLFLAPPINS[3] = {10,11,12};
 const byte COWLFLAPPINCOUNT = 3; 
 
 // Codes for engine settings
-const String THROTTLECODE = "XX"; // Output for throttle settings 
+const String THROTTLECODE = "C56"; // Output for throttle settings 
 const byte THROTTLEPIN = A0;
-const String PROPELLERCODE = "YY"; // Output for propeller settings
+const String PROPELLERCODE = "C60"; // Output for propeller settings
 const byte PROPELLERPIN = A1;
-const String MIXTURECODE = "ZZ"; // Output for mixture settings
+const String MIXTURECODE = "C58"; // Output for mixture settings
 const byte MIXTUREPIN = A2;
 
 // ----------------------------------------------------------------------------------------------
 // Other constants
-const int DELAY = 10;    // Time interval between checking the switch status (in milliseconds)
+const int DELAY = 5;    // Time interval between checking the switch status (in milliseconds)
 const bool FLIPONOFF = true;// Set to 'true' if the ON/OFF values of each input are reversed (1 = Off, 0 = On)
 //const int THROTTLEVAL = 1;  // The numerical ID of the IGNITION code list
 //const int PROPELLERVAL = 2;  // The numerical ID of the IGNITION code list
